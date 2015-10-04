@@ -20,7 +20,7 @@ func MakeTestSchedulable(delay int, id string) TestSchedulable {
 var _ Schedulable = (*TestSchedulable)(nil)
 
 // check if we are ready to run
-func (schedulable TestSchedulable) GetDelay() int {
+func (schedulable TestSchedulable) GetTimeRemaining() int {
 	// convert this to ms
 	del := schedulable.delay - time.Since(schedulable.start).Seconds()*1000
 	if del < 0 {
@@ -28,6 +28,8 @@ func (schedulable TestSchedulable) GetDelay() int {
 	}
 	return int(del)
 }
+
+func (schedulable TestSchedulable) SetTimeRemaining(_ int) {}
 
 func (schedulable TestSchedulable) IsLoopable() bool {
 	return false
@@ -48,16 +50,16 @@ func TestScheduler(t *testing.T) {
 
 	s := MakeScheduler(5, 3)
 	s.Start()
-	go s.AddSchedulabe(MakeTestSchedulable(4000, "d"))
-	go s.AddSchedulabe(MakeTestSchedulable(2200, "c"))
-	go s.AddSchedulabe(MakeTestSchedulable(2000, "a"))
-	go s.AddSchedulabe(MakeTestSchedulable(2100, "b"))
+	go s.AddSchedulable(MakeTestSchedulable(4000, "d"))
+	go s.AddSchedulable(MakeTestSchedulable(2200, "c"))
+	go s.AddSchedulable(MakeTestSchedulable(2000, "a"))
+	go s.AddSchedulable(MakeTestSchedulable(2100, "b"))
 
 	// wait until all the waiting tasks run
 	time.Sleep(5 * time.Second)
 
 	// tell the scheduler we are all done
-	s.Quit <- true
+	s.Stop()
 }
 
 //asdf
