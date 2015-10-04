@@ -143,7 +143,6 @@ func (scheduler *Scheduler) Run() {
 		select {
 		case task := <-scheduler.ready:
 			// assume task gets removed from queue when it is put into the channel
-			fmt.Println("running task")
 			go task.DoWork(scheduler)
 		case <-scheduler.quit:
 			scheduler.isRunning = false
