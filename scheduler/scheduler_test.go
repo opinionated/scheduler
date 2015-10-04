@@ -55,9 +55,8 @@ func TestScheduler(t *testing.T) {
 	go s.AddSchedulable(MakeTestSchedulable(1000, "a"))
 	go s.AddSchedulable(MakeTestSchedulable(1100, "b"))
 
-	fmt.Println("going to run")
 	// wait until all the waiting tasks run
-	time.Sleep(5 * time.Second)
+	time.Sleep(4 * time.Second)
 
 	// tell the scheduler we are all done
 	s.Stop()
