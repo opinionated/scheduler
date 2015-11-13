@@ -85,7 +85,7 @@ func (scheduler *Scheduler) AddSchedulable(schedulable Schedulable) {
 
 // SetCycleTime of the main loop.
 func (scheduler *Scheduler) SetCycleTime(time int) {
-
+	scheduler.cycleTime = time
 }
 
 // Start the Scheduler asynchronously. Does not block.
@@ -108,7 +108,8 @@ func (scheduler *Scheduler) Run() {
 	scheduler.isRunning = true
 
 	// signals the loop to run every (cycleTime) seconds
-	ticker := time.NewTicker(scheduler.cycleTime * time.Second)
+
+	ticker := time.NewTicker(time.Duration(scheduler.cycleTime) * time.Second)
 
 	for {
 
