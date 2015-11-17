@@ -12,9 +12,9 @@ import (
 // one off and periodic tasks.
 type Schedulable interface {
 	// DoWork is run asynchronously by the scheduler when it is ready. Override this.
-	DoWork(*Scheduler)
+	Run(*Scheduler)
 	// GetTimeRemaining before it is ready to run in seconds
-	GetTimeRemaining() int
+	TimeRemaining() int
 	// SetTimeRemaining number of seconds from now until the task should run.
 	SetTimeRemaining(int)
 }
@@ -25,8 +25,10 @@ type SchedulableSorter struct {
 	by    func(s1, s2 Schedulable) bool
 }
 
+// By is used to sort.
 type By func(s1, s2 Schedulable) bool
 
+// Sort sorts an array of schedulables
 func (by By) Sort(schedulables []Schedulable) {
 	ss := &SchedulableSorter{
 		queue: schedulables,
@@ -49,7 +51,7 @@ func (s *SchedulableSorter) Less(i, j int) bool {
 
 // SortLowToHigh sorts Schedulable tasks from shortest time remaining to longest
 func SortLowToHigh(s1, s2 Schedulable) bool {
-	return s1.GetTimeRemaining() < s2.GetTimeRemaining()
+	return s1.TimeRemaining() < s2.TimeRemaining()
 }
 
 // Scheduler runs Schedulable tasks asynchronously at a specified time. Allows for dynamic
@@ -78,8 +80,8 @@ func MakeScheduler(queueSize, bufferSize int) *Scheduler {
 		15}
 }
 
-// AddSchedulable adds a new schedulable to the run queue. May block if the waiting queue is full.
-func (scheduler *Scheduler) AddSchedulable(schedulable Schedulable) {
+// Add adds a new schedulable to the run queue. May block if the waiting queue is full.
+func (scheduler *Scheduler) Add(schedulable Schedulable) {
 	scheduler.addTask <- schedulable
 }
 
@@ -132,21 +134,29 @@ func (scheduler *Scheduler) Run() {
 			By(SortLowToHigh).Sort(scheduler.queue)
 		}
 
-		for len(scheduler.queue) > 0 {
-			if scheduler.queue[0].GetTimeRemaining() < scheduler.cycleTime {
+		i := 0 // declare outside so we can use later
+		didRemove := false
+		for ; i < len(scheduler.queue); i++ {
+			if scheduler.queue[i].TimeRemaining() < scheduler.cycleTime {
 				// run any tasks that are ready
-				go scheduler.queue[0].DoWork(scheduler)
+				go scheduler.queue[i].Run(scheduler)
+				didRemove = true
 
-				// remove the first element
-				// do it this way to make sure we avoid mem leaks
-				// (something could be sitting in an unused part of the queue and not get cleared)
-				copy(scheduler.queue[0:], scheduler.queue[1:])
-				scheduler.queue[len(scheduler.queue)-1] = nil
-				scheduler.queue = scheduler.queue[:len(scheduler.queue)-1]
 			} else { // no tasks to run this cycle
 				break
 			}
 
+		}
+
+		if didRemove {
+			// remove unused elements
+			// do it this way to make sure we avoid mem leaks
+			// (something could be sitting in an unused part of the queue and not get cleared)
+			copy(scheduler.queue[0:], scheduler.queue[i:])
+			for j := i; j <= i; j++ {
+				scheduler.queue[len(scheduler.queue)-j] = nil
+			}
+			scheduler.queue = scheduler.queue[:len(scheduler.queue)-i]
 		}
 
 		select {
