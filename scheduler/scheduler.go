@@ -3,7 +3,7 @@
 package scheduler
 
 import (
-	"fmt"
+	"github.com/opinionated/utils/log"
 	"sort"
 	"time"
 )
@@ -165,7 +165,7 @@ func (scheduler *Scheduler) Run() {
 
 		case <-scheduler.quit:
 			scheduler.isRunning = false
-			fmt.Println("Done with scheduler")
+			log.Warn("Done with scheduler")
 			ticker.Stop()
 			return
 		}
