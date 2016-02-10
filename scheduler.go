@@ -111,7 +111,7 @@ func (scheduler *Scheduler) Run() {
 
 	// signals the loop to run every (cycleTime) seconds
 
-	ticker := time.NewTicker(time.Duration(scheduler.cycleTime) * time.Second)
+	ticker := time.NewTicker(time.Duration(scheduler.cycleTime*1000) * time.Millisecond)
 
 	for {
 
@@ -153,7 +153,7 @@ func (scheduler *Scheduler) Run() {
 			// do it this way to make sure we avoid mem leaks
 			// (something could be sitting in an unused part of the queue and not get cleared)
 			copy(scheduler.queue[0:], scheduler.queue[i:])
-			for j := i; j <= i; j++ {
+			for j := 1; j <= i; j++ {
 				scheduler.queue[len(scheduler.queue)-j] = nil
 			}
 			scheduler.queue = scheduler.queue[:len(scheduler.queue)-i]
